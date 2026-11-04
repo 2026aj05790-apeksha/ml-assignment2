@@ -62,11 +62,13 @@ for name, m in models.items():
     m.fit(X_tr, y_tr)
     for path in FILES[name]:
         joblib.dump(m, path)
-    p = m.predict_proba(X_te)[:, 1]; yp = m.predict(X_te)
-    probas[name] = p; cms[name] = confusion_matrix(y_te, yp)
-    rows.append({"ML Model Name": name, "Accuracy": accuracy_score(y_te, yp), "AUC": roc_auc_score(y_te, p),
-        "Precision": precision_score(y_te, yp), "Recall": recall_score(y_te, yp), "F1": f1_score(y_te, yp),
-        "MCC": matthews_corrcoef(y_te, yp), "CV Acc (5-fold, train)": cv_acc.mean(), "CV Std": cv_acc.std(),
+    y_clinical = 1 - y_te  # malignant is the positive class for published metrics
+    p = m.predict_proba(X_te)[:, 0]
+    yp = (p >= 0.5).astype(int)
+    probas[name] = p; cms[name] = confusion_matrix(y_clinical, yp)
+    rows.append({"ML Model Name": name, "Accuracy": accuracy_score(y_clinical, yp), "AUC": roc_auc_score(y_clinical, p),
+        "Precision": precision_score(y_clinical, yp), "Recall": recall_score(y_clinical, yp), "F1": f1_score(y_clinical, yp),
+        "MCC": matthews_corrcoef(y_clinical, yp), "CV Acc (5-fold, train)": cv_acc.mean(), "CV Std": cv_acc.std(),
         "Train Acc": accuracy_score(y_tr, m.predict(X_tr))})
 res = pd.DataFrame(rows).round(4)
 res.to_csv(RESULTS_DIR / "metrics.csv", index=False)
@@ -91,7 +93,7 @@ g.figure.suptitle("Top-6 target-correlated features", y=1.02); g.figure.savefig(
 
 plt.figure(figsize=(7, 6))
 for n, p in probas.items():
-    fpr, tpr, _ = roc_curve(y_te, p); plt.plot(fpr, tpr, lw=2, color=COL[n], label=f"{n} (AUC={roc_auc_score(y_te, p):.3f})")
+    fpr, tpr, _ = roc_curve(1 - y_te, p); plt.plot(fpr, tpr, lw=2, color=COL[n], label=f"{n} (AUC={roc_auc_score(1 - y_te, p):.3f})")
 plt.plot([0, 1], [0, 1], "k--", lw=1); plt.xlabel("False Positive Rate"); plt.ylabel("True Positive Rate")
 plt.title("ROC curves – all models (test set)"); plt.legend(loc="lower right"); save("04_roc_curves")
 

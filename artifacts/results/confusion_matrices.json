@@ -1,1 +1,1 @@
-{"Logistic Regression": [[41, 1], [1, 71]], "Decision Tree": [[38, 4], [7, 65]], "KNN": [[39, 3], [0, 72]], "Naive Bayes": [[38, 4], [4, 68]], "Support Vector Machine": [[41, 1], [1, 71]]}
+{"Logistic Regression": [[71, 1], [1, 41]], "Decision Tree": [[65, 7], [4, 38]], "KNN": [[72, 0], [3, 39]], "Naive Bayes": [[68, 4], [4, 38]], "Support Vector Machine": [[71, 1], [1, 41]]}
