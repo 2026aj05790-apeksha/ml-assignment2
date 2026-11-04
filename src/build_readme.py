@@ -16,6 +16,16 @@ for n in res.index:
 always = set.intersection(*wrong.values()); anyw = set.union(*wrong.values())
 fn = {n: int(c[0, 1]) for n, c in cms.items()}  # actual malignant(0) predicted benign(1)
 fp = {n: int(c[1, 0]) for n, c in cms.items()}
+diagnostic = {}
+for n, c in cms.items():
+    tn, fp_count, fn_count, tp = c.ravel()
+    diagnostic[n] = {
+        "Balanced Accuracy": (tp / (tp + fn_count) + tn / (tn + fp_count)) / 2,
+        "Specificity": tn / (tn + fp_count),
+        "NPV": tn / (tn + fn_count) if tn + fn_count else 0.0,
+        "FNR": fn_count / (fn_count + tp) if fn_count + tp else 0.0,
+        "TN": int(tn), "FP": int(fp_count), "FN": int(fn_count), "TP": int(tp),
+    }
 r = res
 def tbl():
     h = "| ML Model Name | Accuracy | AUC | Precision | Recall | F1 | MCC |\n|---|---|---|---|---|---|---|\n"
@@ -95,6 +105,26 @@ Hyper-parameters: LR (C=1), Decision Tree (max_depth=5, min_samples_leaf=3), KNN
 |---|---|---|---|
 """ + "\n".join(f"| {n} | {r.loc[n,'Train Acc']:.4f} | {cv(n)} | {r.loc[n,'Accuracy']:.4f} |" for n in r.index) + f"""
 
+### Additional diagnostic metrics
+The required six metrics are shown above. The following measures provide a more complete view of class-specific and imbalance-aware performance. Here, class 1 (benign) is treated as the positive class; therefore specificity is the ability to identify malignant cases (class 0), while FNR is the proportion of benign cases predicted as malignant.
+
+| ML Model Name | Balanced Accuracy | Specificity | NPV | FNR |
+|---|---|---|---|---|
+""" + "\n".join(
+    f"| {n} | {diagnostic[n]['Balanced Accuracy']:.4f} | {diagnostic[n]['Specificity']:.4f} | "
+    f"{diagnostic[n]['NPV']:.4f} | {diagnostic[n]['FNR']:.4f} |"
+    for n in r.index
+) + f"""
+
+### Confusion-matrix counts
+| ML Model Name | TN | FP | FN | TP |
+|---|---:|---:|---:|---:|
+""" + "\n".join(
+    f"| {n} | {diagnostic[n]['TN']} | {diagnostic[n]['FP']} | "
+    f"{diagnostic[n]['FN']} | {diagnostic[n]['TP']} |"
+    for n in r.index
+) + f"""
+
 {fig('06_metric_comparison','Figure 3 – Metric comparison across models')}
 {fig('04_roc_curves','Figure 4 – ROC curves (test set)')}
 {fig('05_confusion_matrices','Figure 5 – Confusion matrices (class 0 = malignant)')}
@@ -112,7 +142,7 @@ Hyper-parameters: LR (C=1), Decision Tree (max_depth=5, min_samples_leaf=3), KNN
 Most of the accuracy gap between models therefore comes from a small set of ambiguous cases, which is why MCC/recall and CV are used in addition to a single test split.
 
 ## Streamlit application features
-CSV upload (test data only) · model dropdown · six metric cards · confusion matrix + classification report · ROC curve · adjustable decision threshold ·
+CSV upload (test data only) · model dropdown · six required metric cards · detailed per-class classification report · confusion matrix · specificity · balanced accuracy · ROC curve · adjustable decision threshold ·
 side-by-side comparison of all five saved models on the uploaded data · prediction download · input validation (missing columns / non-binary target).
 Models are loaded with `joblib`; **no training happens in the app**.
 

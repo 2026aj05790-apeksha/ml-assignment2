@@ -73,6 +73,26 @@ Hyper-parameters: LR (C=1), Decision Tree (max_depth=5, min_samples_leaf=3), KNN
 | Naive Bayes | 0.9385 | 0.934 ± 0.029 | 0.9298 |
 | Support Vector Machine | 0.9824 | 0.969 ± 0.015 | 0.9825 |
 
+### Additional diagnostic metrics
+The required six metrics are shown above. The following measures provide a more complete view of class-specific and imbalance-aware performance. Here, class 1 (benign) is treated as the positive class; therefore specificity is the ability to identify malignant cases (class 0), while FNR is the proportion of benign cases predicted as malignant.
+
+| ML Model Name | Balanced Accuracy | Specificity | NPV | FNR |
+|---|---|---|---|---|
+| Logistic Regression | 0.9812 | 0.9762 | 0.9762 | 0.0139 |
+| Decision Tree | 0.9038 | 0.9048 | 0.8444 | 0.0972 |
+| KNN | 0.9643 | 0.9286 | 1.0000 | 0.0000 |
+| Naive Bayes | 0.9246 | 0.9048 | 0.9048 | 0.0556 |
+| Support Vector Machine | 0.9812 | 0.9762 | 0.9762 | 0.0139 |
+
+### Confusion-matrix counts
+| ML Model Name | TN | FP | FN | TP |
+|---|---:|---:|---:|---:|
+| Logistic Regression | 41 | 1 | 1 | 71 |
+| Decision Tree | 38 | 4 | 7 | 65 |
+| KNN | 39 | 3 | 0 | 72 |
+| Naive Bayes | 38 | 4 | 4 | 68 |
+| Support Vector Machine | 41 | 1 | 1 | 71 |
+
 ![Figure 3 – Metric comparison across models](artifacts/figures/06_metric_comparison.png)
 *Figure 3 – Metric comparison across models*
 
@@ -104,7 +124,7 @@ Hyper-parameters: LR (C=1), Decision Tree (max_depth=5, min_samples_leaf=3), KNN
 Most of the accuracy gap between models therefore comes from a small set of ambiguous cases, which is why MCC/recall and CV are used in addition to a single test split.
 
 ## Streamlit application features
-CSV upload (test data only) · model dropdown · six metric cards · confusion matrix + classification report · ROC curve · adjustable decision threshold ·
+CSV upload (test data only) · model dropdown · six required metric cards · detailed per-class classification report · confusion matrix · specificity · balanced accuracy · ROC curve · adjustable decision threshold ·
 side-by-side comparison of all five saved models on the uploaded data · prediction download · input validation (missing columns / non-binary target).
 Models are loaded with `joblib`; **no training happens in the app**.
 

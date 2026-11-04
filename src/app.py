@@ -4,7 +4,7 @@ import os, joblib
 import numpy as np, pandas as pd, streamlit as st
 import matplotlib.pyplot as plt, seaborn as sns
 from sklearn.metrics import (accuracy_score, roc_auc_score, precision_score, recall_score, f1_score,
-    matthews_corrcoef, confusion_matrix, classification_report, roc_curve)
+    matthews_corrcoef, balanced_accuracy_score, confusion_matrix, classification_report, roc_curve)
 
 st.set_page_config(page_title="Tumour Diagnosis – Model Lab", page_icon="🩺", layout="wide")
 ROOT = Path(__file__).resolve().parents[1]
@@ -20,6 +20,31 @@ def load(name): return joblib.load(MODEL_DIR / (MODELS[name] + ".joblib"))
 def metrics(y, yp, p):
     return {"Accuracy": accuracy_score(y, yp), "AUC": roc_auc_score(y, p), "Precision": precision_score(y, yp),
             "Recall": recall_score(y, yp), "F1": f1_score(y, yp), "MCC": matthews_corrcoef(y, yp)}
+
+def detailed_report(y, yp):
+    cm = confusion_matrix(y, yp, labels=[0, 1])
+    tn, fp, fn, tp = cm.ravel()
+    report = pd.DataFrame(classification_report(
+        y, yp, labels=[0, 1], target_names=["Malignant (0)", "Benign (1)"],
+        output_dict=True, zero_division=0
+    )).T
+    report.index.name = "Class / summary"
+    report = report.rename(columns={"support": "Support"})
+    report["Support"] = report["Support"].astype(int)
+    report.loc["Overall", ["precision", "recall", "f1-score"]] = [
+        precision_score(y, yp, zero_division=0),
+        recall_score(y, yp, zero_division=0),
+        f1_score(y, yp, zero_division=0),
+    ]
+    report.loc["Overall", "Support"] = len(y)
+    return report, {
+        "Specificity": tn / (tn + fp) if tn + fp else 0.0,
+        "Balanced accuracy": balanced_accuracy_score(y, yp),
+        "True negatives": tn,
+        "False positives": fp,
+        "False negatives": fn,
+        "True positives": tp,
+    }
 
 # ---------------- sidebar ----------------
 st.sidebar.title("⚙️ Controls")
@@ -74,13 +99,20 @@ with tab1:
     ax.set_ylim(0, 1.05); ax.set_title("Metric profile"); plt.setp(ax.get_xticklabels(), rotation=30); c2.pyplot(fig)
 
 with tab2:
-    cm = confusion_matrix(y, yp, labels=[0, 1]); c1, c2 = st.columns([1, 1.2])
+    cm = confusion_matrix(y, yp, labels=[0, 1]); report, extra = detailed_report(y, yp)
+    c1, c2 = st.columns([1, 1.2])
     fig, ax = plt.subplots(figsize=(4.5, 4)); sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", ax=ax,
         xticklabels=CLASSES, yticklabels=CLASSES); ax.set(xlabel="Predicted", ylabel="Actual", title="Confusion matrix"); c1.pyplot(fig)
-    c2.markdown("**Classification report**")
-    c2.dataframe(pd.DataFrame(classification_report(y, yp, target_names=CLASSES, output_dict=True)).T.round(3), width="stretch")
+    c2.markdown("**Detailed classification report**")
+    c2.dataframe(report.round(3), width="stretch")
     tn, fp, fn, tp = cm.ravel()
+    st.markdown("**Additional diagnostic measures**")
+    diagnostic_cols = st.columns(6)
+    for col, (label, value) in zip(diagnostic_cols, extra.items()):
+        col.metric(label, f"{value:.3f}" if isinstance(value, float) else str(value))
     st.info(f"**{fn}** malignant case(s) missed (false negatives – clinically the costliest error) and **{fp}** benign case(s) flagged as malignant.")
+    if fn:
+        st.warning("Clinical note: false negatives are malignant cases predicted as benign and are the highest-cost error in this use case.")
 
 with tab3:
     rows = []
