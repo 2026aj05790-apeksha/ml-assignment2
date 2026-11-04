@@ -28,7 +28,7 @@ Many are strongly collinear (radius–perimeter–area r > 0.95), which matters 
 
 
 ## c. GitHub Repository Link
-https://github.com/<your-username>/<repo-name>  *(replace after pushing)*
+https://github.com/2026aj05790-apeksha/ml-assignment2
 
 ```
 project-folder/
@@ -43,7 +43,7 @@ project-folder/
 ├── figures/               # all plots used below
 └── agents/                # grader agent + improvement loop (development tooling)
 ```
-**Live Streamlit app:** https://<your-app>.streamlit.app  *(replace after deploying)*
+**Live Streamlit app:** https://ml-assignment2-bxkybtx2fackxbtb4bh9vk.streamlit.app
 
 ### How to run / reproduce
 ```bash

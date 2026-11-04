@@ -39,12 +39,22 @@ feats = list(model.feature_names_in_)
 missing = [c for c in feats + [TARGET] if c not in df.columns]
 if missing:
     st.error(f"Uploaded CSV is missing required columns: {missing}"); st.stop()
-if not set(df[TARGET].unique()) <= {0, 1}:
+target = pd.to_numeric(df[TARGET], errors="coerce")
+if target.isna().any() or not target.isin([0, 1]).all():
     st.error("Target column must contain only 0 / 1."); st.stop()
+non_numeric = [c for c in feats if not pd.api.types.is_numeric_dtype(df[c])]
+if non_numeric:
+    st.error(f"Feature columns must be numeric: {non_numeric}"); st.stop()
+before = len(df)
+df = df.dropna(subset=feats + [TARGET]).copy()
+if len(df) < before:
+    st.warning(f"Dropped {before - len(df)} row(s) containing missing values.")
+if df.empty:
+    st.error("No valid rows remain after removing missing values."); st.stop()
+df[TARGET] = target.loc[df.index].astype(int)
 if df[TARGET].nunique() < 2:
-    st.warning("Only one class present in target – AUC / MCC cannot be computed."); st.stop()
-df = df.dropna(subset=feats + [TARGET])
-X, y = df[feats], df[TARGET].astype(int)
+    st.warning("At least two target classes are required to compute AUC and MCC."); st.stop()
+X, y = df[feats], df[TARGET]
 p = model.predict_proba(X)[:, 1]; yp = (p >= thr).astype(int)
 M = metrics(y, yp, p)
 
