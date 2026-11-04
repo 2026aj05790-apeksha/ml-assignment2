@@ -1,4 +1,4 @@
-"""Build the single submission PDF: (1) GitHub link (2) Streamlit link (3) BITS-Lab screenshot (4) README content."""
+"""Build the single submission PDF: links, BITS-Lab usage screenshots, and README."""
 import json, os, re, sys
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
@@ -52,12 +52,18 @@ F = [Paragraph("BITS Pilani – M.Tech (AIML) – Machine Learning – Assignmen
      Paragraph(f"Name: {cfg.get('student_name') or '________'} &nbsp;&nbsp; BITS ID: {cfg.get('bits_id') or '________'}", B), Spacer(1, 14),
      Paragraph("1. GitHub Repository Link", H2), Paragraph(inline(gh), B), Spacer(1, 10),
      Paragraph("2. Live Streamlit App Link", H2), Paragraph(inline(ap), B), Spacer(1, 10),
-     Paragraph("3. Screenshot – assignment execution on BITS Virtual Lab", H2)]
-shot = cfg.get("screenshot")
-if shot and os.path.exists(shot):
-    w, h = ImageReader(shot).getSize(); F.append(Image(shot, 16 * cm, 16 * cm * h / w))
+     Paragraph("3. BITS Virtual Lab usage screenshots", H2)]
+shots = cfg.get("screenshot") or []
+if isinstance(shots, str):
+    shots = [shots] if shots else []
+valid_shots = [shot for shot in shots if os.path.exists(shot)]
+if valid_shots:
+    for shot in valid_shots:
+        w, h = ImageReader(shot).getSize()
+        F.append(Image(shot, 16 * cm, 16 * cm * h / w))
+        F.append(Spacer(1, 8))
 else:
-    t = Table([[Paragraph("<b>[ Insert ONE BITS Virtual Lab screenshot here ]</b><br/>Set 'screenshot' in config.json and rebuild.", B)]], colWidths=[16*cm], rowHeights=[6*cm])
+    t = Table([[Paragraph("<b>[ Add BITS Virtual Lab usage screenshots ]</b><br/>Set 'screenshot' in config.json and rebuild.", B)]], colWidths=[16*cm], rowHeights=[6*cm])
     t.setStyle(TableStyle([("BOX", (0, 0), (-1, -1), 1, colors.grey), ("ALIGN", (0, 0), (-1, -1), "CENTER"), ("VALIGN", (0, 0), (-1, -1), "MIDDLE")])); F.append(t)
 F += [PageBreak(), Paragraph("4. README Content", H2), Spacer(1, 4)] + md_to_flow(open("README.md", encoding="utf-8").read())
 doc.build(F, onFirstPage=lambda c, d: None, onLaterPages=lambda c, d: (c.setFont("Helvetica", 7), c.drawRightString(19 * cm, 1 * cm, f"Page {d.page}")))
