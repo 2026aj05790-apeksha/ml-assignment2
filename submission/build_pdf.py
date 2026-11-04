@@ -7,7 +7,7 @@ from reportlab.lib.units import cm
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image, PageBreak, Preformatted, KeepTogether
 from reportlab.lib.utils import ImageReader
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__))); os.chdir(ROOT)
-cfg = json.load(open("config.json")); S = getSampleStyleSheet()
+cfg = json.load(open("config/config.json")); S = getSampleStyleSheet()
 H1 = ParagraphStyle("h1", S["Heading1"], textColor=colors.HexColor("#1f3a5f")); H2 = ParagraphStyle("h2", S["Heading2"], textColor=colors.HexColor("#1f3a5f"))
 B = ParagraphStyle("b", S["BodyText"], fontSize=9, leading=12); CELL = ParagraphStyle("c", B, fontSize=7.5, leading=9.5)
 CODE = ParagraphStyle("code", fontName="Courier", fontSize=6.6, leading=8.2)
@@ -56,11 +56,12 @@ F = [Paragraph("BITS Pilani – M.Tech (AIML) – Machine Learning – Assignmen
 shots = cfg.get("screenshot") or []
 if isinstance(shots, str):
     shots = [shots] if shots else []
-valid_shots = [shot for shot in shots if os.path.exists(shot)]
+valid_shots = [shot for shot in shots if os.path.exists(os.path.join(ROOT, shot))]
 if valid_shots:
     for shot in valid_shots:
-        w, h = ImageReader(shot).getSize()
-        F.append(Image(shot, 16 * cm, 16 * cm * h / w))
+        shot_path = os.path.join(ROOT, shot)
+        w, h = ImageReader(shot_path).getSize()
+        F.append(Image(shot_path, 16 * cm, 16 * cm * h / w))
         F.append(Spacer(1, 8))
 else:
     t = Table([[Paragraph("<b>[ Add BITS Virtual Lab usage screenshots ]</b><br/>Set 'screenshot' in config.json and rebuild.", B)]], colWidths=[16*cm], rowHeights=[6*cm])

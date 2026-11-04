@@ -20,10 +20,10 @@ The task is a **binary classification** problem: build, evaluate and compare fiv
 The 10 base measurements: radius, texture, perimeter, area, smoothness, compactness, concavity, concave points, symmetry, fractal dimension.
 Many are strongly collinear (radius–perimeter–area r > 0.95), which matters for Naive Bayes (see observations).
 
-![Figure 1 – Class distribution](figures/01_class_distribution.png)
+![Figure 1 – Class distribution](artifacts/figures/01_class_distribution.png)
 *Figure 1 – Class distribution*
 
-![Figure 2 – Feature correlation heatmap: blocks of highly correlated size features](figures/02_correlation_heatmap.png)
+![Figure 2 – Feature correlation heatmap: blocks of highly correlated size features](artifacts/figures/02_correlation_heatmap.png)
 *Figure 2 – Feature correlation heatmap: blocks of highly correlated size features*
 
 
@@ -32,23 +32,22 @@ https://github.com/2026aj05790-apeksha/ml-assignment2
 
 ```
 project-folder/
-├── app.py                 # Streamlit app (upload CSV → choose model → metrics, confusion matrix, report, comparison)
-├── train.py               # trains 5 models, computes metrics, saves models + figures
-├── build_readme.py        # regenerates this README from real results
-├── requirements.txt
-├── test_data.csv          # 114-row hold-out test set (30 features + diagnosis)
-├── full_dataset.csv       # complete 569-row dataset (for reference)
-├── model/                 # 5 saved pipelines (.joblib)
-├── results/               # metrics.csv, confusion_matrices.json
-├── figures/               # all plots used below
-└── agents/                # grader agent + improvement loop (development tooling)
+├── src/                   # application, training, and README-generation code
+├── artifacts/             # generated data, models, metrics, and figures
+├── test_data.csv          # rubric-required hold-out test data mirror
+├── model/                 # rubric-required saved-model mirror
+├── problem_statement/     # original assignment PDF
+├── submission/            # final PDF and BITS Lab screenshots
+├── config/                # student, link, and submission metadata
+├── reports/               # grader feedback and reports
+└── requirements.txt
 ```
 **Live Streamlit app:** https://ml-assignment2-bxkybtx2fackxbtb4bh9vk.streamlit.app
 
 ### How to run / reproduce
 ```bash
 pip install -r requirements.txt
-python train.py            # retrains, rewrites model/, results/, figures/, test_data.csv
+python train.py            # retrains all models and regenerates artifacts/
 streamlit run app.py       # launches the evaluation app
 ```
 
@@ -74,19 +73,19 @@ Hyper-parameters: LR (C=1), Decision Tree (max_depth=5, min_samples_leaf=3), KNN
 | Naive Bayes | 0.9385 | 0.934 ± 0.029 | 0.9298 |
 | Support Vector Machine | 0.9824 | 0.969 ± 0.015 | 0.9825 |
 
-![Figure 3 – Metric comparison across models](figures/06_metric_comparison.png)
+![Figure 3 – Metric comparison across models](artifacts/figures/06_metric_comparison.png)
 *Figure 3 – Metric comparison across models*
 
-![Figure 4 – ROC curves (test set)](figures/04_roc_curves.png)
+![Figure 4 – ROC curves (test set)](artifacts/figures/04_roc_curves.png)
 *Figure 4 – ROC curves (test set)*
 
-![Figure 5 – Confusion matrices (class 0 = malignant)](figures/05_confusion_matrices.png)
+![Figure 5 – Confusion matrices (class 0 = malignant)](artifacts/figures/05_confusion_matrices.png)
 *Figure 5 – Confusion matrices (class 0 = malignant)*
 
-![Figure 6 – Train vs CV vs test accuracy](figures/08_overfit_check.png)
+![Figure 6 – Train vs CV vs test accuracy](artifacts/figures/08_overfit_check.png)
 *Figure 6 – Train vs CV vs test accuracy*
 
-![Figure 7 – Feature importance (Decision Tree) and coefficients (Logistic Regression)](figures/09_feature_importance.png)
+![Figure 7 – Feature importance (Decision Tree) and coefficients (Logistic Regression)](artifacts/figures/09_feature_importance.png)
 *Figure 7 – Feature importance (Decision Tree) and coefficients (Logistic Regression)*
 
 
