@@ -99,7 +99,8 @@ plt.title("ROC curves – all models (test set)"); plt.legend(loc="lower right")
 
 fig, axs = plt.subplots(1, 5, figsize=(21, 4))
 for ax, (n, c) in zip(axs, cms.items()):
-    sns.heatmap(c, annot=True, fmt="d", cmap="Blues", cbar=False, ax=ax, xticklabels=["Malig", "Benign"], yticklabels=["Malig", "Benign"])
+    sns.heatmap(c, annot=True, fmt="d", cmap="Blues", cbar=False, ax=ax,
+                xticklabels=["Benign", "Malignant"], yticklabels=["Benign", "Malignant"])
     ax.set_title(n); ax.set_xlabel("Predicted"); ax.set_ylabel("Actual")
 save("05_confusion_matrices")
 

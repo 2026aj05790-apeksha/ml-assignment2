@@ -43,7 +43,6 @@ project-folder/
 ├── problem_statement/     # original assignment PDF
 ├── submission/            # final PDF and BITS Lab screenshots
 ├── config/                # student, link, and submission metadata
-├── reports/               # grader feedback and reports
 └── requirements.txt
 ```
 The root `app.py`, `train.py`, and `build_readme.py` files are thin compatibility launchers; implementation remains in `src/`. `artifacts/` is the generated source-of-truth output, while root `model/`, `test_data.csv`, and `full_dataset.csv` are refreshed compatibility copies required by the assignment layout.
@@ -83,20 +82,20 @@ The required six metrics are shown above. For clinical interpretation, malignant
 
 | ML Model Name | Balanced Accuracy | Malignant Sensitivity | Benign Specificity | Malignant FNR |
 |---|---|---|---|---|
-| Logistic Regression | 0.9812 | 0.9861 | 0.9762 | 0.0139 |
-| Decision Tree | 0.9038 | 0.9028 | 0.9048 | 0.0972 |
-| KNN | 0.9643 | 1.0000 | 0.9286 | 0.0000 |
-| Naive Bayes | 0.9246 | 0.9444 | 0.9048 | 0.0556 |
-| Support Vector Machine | 0.9812 | 0.9861 | 0.9762 | 0.0139 |
+| Logistic Regression | 0.9812 | 0.9762 | 0.9861 | 0.0238 |
+| Decision Tree | 0.9038 | 0.9048 | 0.9028 | 0.0952 |
+| KNN | 0.9643 | 0.9286 | 1.0000 | 0.0714 |
+| Naive Bayes | 0.9246 | 0.9048 | 0.9444 | 0.0952 |
+| Support Vector Machine | 0.9812 | 0.9762 | 0.9861 | 0.0238 |
 
 ### Clinically labelled confusion counts
 | ML Model Name | Malignant → malignant | Malignant → benign (missed cancer) | Benign → malignant (false alarm) | Benign → benign |
 |---|---:|---:|---:|---:|
-| Logistic Regression | 71 | 1 | 1 | 41 |
-| Decision Tree | 65 | 7 | 4 | 38 |
-| KNN | 72 | 0 | 3 | 39 |
-| Naive Bayes | 68 | 4 | 4 | 38 |
-| Support Vector Machine | 71 | 1 | 1 | 41 |
+| Logistic Regression | 41 | 1 | 1 | 71 |
+| Decision Tree | 38 | 4 | 7 | 65 |
+| KNN | 39 | 3 | 0 | 72 |
+| Naive Bayes | 38 | 4 | 4 | 68 |
+| Support Vector Machine | 41 | 1 | 1 | 71 |
 
 ![Figure 3 – Metric comparison across models](artifacts/figures/06_metric_comparison.png)
 *Figure 3 – Metric comparison across models*
@@ -104,8 +103,8 @@ The required six metrics are shown above. For clinical interpretation, malignant
 ![Figure 4 – ROC curves (test set)](artifacts/figures/04_roc_curves.png)
 *Figure 4 – ROC curves (test set)*
 
-![Figure 5 – Confusion matrices (class 0 = malignant)](artifacts/figures/05_confusion_matrices.png)
-*Figure 5 – Confusion matrices (class 0 = malignant)*
+![Figure 5 – Confusion matrices (benign/malignant axes; malignant is the clinical positive class)](artifacts/figures/05_confusion_matrices.png)
+*Figure 5 – Confusion matrices (benign/malignant axes; malignant is the clinical positive class)*
 
 ![Figure 6 – Train vs CV vs test accuracy](artifacts/figures/08_overfit_check.png)
 *Figure 6 – Train vs CV vs test accuracy*
@@ -118,11 +117,11 @@ The required six metrics are shown above. For clinical interpretation, malignant
 | ML Model Name | Observation about model performance |
 |---|---|
 | Logistic Regression | Logistic Regression records 98.25% accuracy, AUC 0.9954, and MCC 0.962. It makes 1 missed-cancer error and 1 benign false alarm on the 114-row test set. Its train score (0.989) is close to the cross-validation result (0.978 ± 0.010), while the linear coefficients provide useful directionality for interpretation. |
-| Decision Tree | The Decision Tree has the lowest test performance: 90.35% accuracy, AUC 0.937, and MCC 0.797. Its training accuracy (0.980) is much higher than its test accuracy, indicating variance and overfitting. It misses 7 malignant cases, the largest missed-cancer count, although its rule structure remains easy to explain. |
-| KNN | KNN reaches 97.37% accuracy and the best malignant sensitivity (1.000) because it misses no malignant test cases. The trade-off is 3 benign cases flagged as malignant, which lowers benign specificity to 0.929. Standardisation is essential for distance calculations; its training score of 1.0000 is higher than its 5-fold CV score (0.963 ± 0.020), showing that memorisation does not transfer perfectly. |
+| Decision Tree | The Decision Tree has the lowest test performance: 90.35% accuracy, AUC 0.937, and MCC 0.797. Its training accuracy (0.980) is much higher than its test accuracy, indicating variance and overfitting. It misses 4 malignant cases, the largest missed-cancer count, although its rule structure remains easy to explain. |
+| KNN | KNN reaches 97.37% accuracy and malignant sensitivity of 0.929. It misses 3 malignant cases and produces 0 benign false alarms, giving benign specificity of 1.000. Standardisation is essential for distance calculations; its training score of 1.0000 is higher than its 5-fold CV score (0.963 ± 0.020), showing that memorisation does not transfer perfectly. |
 | Naive Bayes | Naive Bayes obtains 92.98% accuracy and MCC 0.849, while its AUC is relatively strong at 0.9868. The gap suggests useful ranking but less reliable threshold decisions. Highly correlated radius, perimeter, and area variables conflict with the independence assumption, and the similar train (0.939) and test scores point more to bias than overfitting. |
 | Support Vector Machine | The RBF SVM is effectively tied with Logistic Regression: accuracy 98.25%, AUC 0.9950, and MCC 0.962. Its CV accuracy (0.969 ± 0.015) is below Logistic Regression's, so the additional non-linear flexibility does not improve this split despite the strong test result. |
-| **Overall, Winner for your dataset?** | **Logistic Regression** (with SVM as a statistical tie). LR and SVM have identical test accuracy (98.25%), MCC (0.962) and recall, but LR has the higher 5-fold CV accuracy (0.978 ± 0.010 vs 0.969 ± 0.015), the highest AUC, trains in milliseconds and is interpretable. We use MCC and malignant sensitivity alongside accuracy because the malignant class is the safety-critical class; a malignant tumour predicted benign is the clinically costly error. KNN avoids missed malignant cases here but raises more benign false alarms. With only 114 test rows, one sample changes accuracy by 0.88%, so the LR/SVM tie should not be over-interpreted. |
+| **Overall, Winner for your dataset?** | **Logistic Regression** (with SVM as a statistical tie). LR and SVM have identical test accuracy (98.25%), MCC (0.962) and recall, but LR has the higher 5-fold CV accuracy (0.978 ± 0.010 vs 0.969 ± 0.015), the highest AUC, trains in milliseconds and is interpretable. We use MCC and malignant sensitivity alongside accuracy because the malignant class is the safety-critical class; a malignant tumour predicted benign is the clinically costly error. KNN misses more malignant cases than LR/SVM on this split, although it produces no benign false alarms. With only 114 test rows, one sample changes accuracy by 0.88%, so the LR/SVM tie should not be over-interpreted. |
 
 ### Error analysis
 15 of 114 test samples are misclassified by at least one model and **1** by all five – these are genuinely borderline tumours whose measurements overlap the other class.

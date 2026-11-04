@@ -14,21 +14,20 @@ wrong = {}
 for n in res.index:
     m = joblib.load(ROOT / "artifacts/models" / (n.lower().replace(" ", "_") + ".joblib")); wrong[n] = set(np.where(m.predict(X) != y)[0])
 always = set.intersection(*wrong.values()); anyw = set.union(*wrong.values())
-missed_cancer = {n: int(c[0, 1]) for n, c in cms.items()}  # malignant(0) predicted benign(1)
-false_alarm = {n: int(c[1, 0]) for n, c in cms.items()}  # benign(1) predicted malignant(0)
+missed_cancer = {n: int(c[1, 0]) for n, c in cms.items()}  # malignant predicted benign
+false_alarm = {n: int(c[0, 1]) for n, c in cms.items()}  # benign predicted malignant
 diagnostic = {}
 for n, c in cms.items():
-    malignant_correct, malignant_missed, benign_flagged, benign_correct = c.ravel()
+    tn, fp, fn, tp = c.ravel()  # clinical labels: 0 = benign, 1 = malignant
     diagnostic[n] = {
-        "Balanced Accuracy": (malignant_correct / (malignant_correct + malignant_missed)
-                              + benign_correct / (benign_correct + benign_flagged)) / 2,
-        "Malignant Sensitivity": malignant_correct / (malignant_correct + malignant_missed),
-        "Benign Specificity": benign_correct / (benign_correct + benign_flagged),
-        "Malignant FNR": malignant_missed / (malignant_correct + malignant_missed),
-        "Malignant correct": int(malignant_correct),
-        "Malignant missed": int(malignant_missed),
-        "Benign flagged": int(benign_flagged),
-        "Benign correct": int(benign_correct),
+        "Balanced Accuracy": (tp / (tp + fn) + tn / (tn + fp)) / 2,
+        "Malignant Sensitivity": tp / (tp + fn),
+        "Benign Specificity": tn / (tn + fp),
+        "Malignant FNR": fn / (tp + fn),
+        "Malignant correct": int(tp),
+        "Malignant missed": int(fn),
+        "Benign flagged": int(fp),
+        "Benign correct": int(tn),
     }
 r = res
 def tbl():
@@ -36,18 +35,20 @@ def tbl():
     return h + "\n".join(f"| {n} | " + " | ".join(f"{r.loc[n, c]:.4f}" for c in ["Accuracy", "AUC", "Precision", "Recall", "F1", "MCC"]) + " |" for n in r.index)
 def cv(n): return f"{r.loc[n,'CV Acc (5-fold, train)']:.3f} ± {r.loc[n,'CV Std']:.3f}"
 knn_malignant_sensitivity = diagnostic["KNN"]["Malignant Sensitivity"]
+knn_malignant_missed = missed_cancer["KNN"]
+knn_false_alarm = false_alarm["KNN"]
 knn_benign_specificity = diagnostic["KNN"]["Benign Specificity"]
 O = {
 "Logistic Regression": f"Logistic Regression records {r.loc['Logistic Regression','Accuracy']:.2%} accuracy, AUC {r.loc['Logistic Regression','AUC']:.4f}, and MCC {r.loc['Logistic Regression','MCC']:.3f}. It makes {missed_cancer['Logistic Regression']} missed-cancer error and {false_alarm['Logistic Regression']} benign false alarm on the 114-row test set. Its train score ({r.loc['Logistic Regression','Train Acc']:.3f}) is close to the cross-validation result ({cv('Logistic Regression')}), while the linear coefficients provide useful directionality for interpretation.",
 "Decision Tree": f"The Decision Tree has the lowest test performance: {r.loc['Decision Tree','Accuracy']:.2%} accuracy, AUC {r.loc['Decision Tree','AUC']:.3f}, and MCC {r.loc['Decision Tree','MCC']:.3f}. Its training accuracy ({r.loc['Decision Tree','Train Acc']:.3f}) is much higher than its test accuracy, indicating variance and overfitting. It misses {missed_cancer['Decision Tree']} malignant cases, the largest missed-cancer count, although its rule structure remains easy to explain.",
-"KNN": f"KNN reaches {r.loc['KNN','Accuracy']:.2%} accuracy and the best malignant sensitivity ({knn_malignant_sensitivity:.3f}) because it misses no malignant test cases. The trade-off is {false_alarm['KNN']} benign cases flagged as malignant, which lowers benign specificity to {knn_benign_specificity:.3f}. Standardisation is essential for distance calculations; its training score of 1.0000 is higher than its 5-fold CV score ({cv('KNN')}), showing that memorisation does not transfer perfectly.",
+"KNN": f"KNN reaches {r.loc['KNN','Accuracy']:.2%} accuracy and malignant sensitivity of {knn_malignant_sensitivity:.3f}. It misses {knn_malignant_missed} malignant cases and produces {knn_false_alarm} benign false alarms, giving benign specificity of {knn_benign_specificity:.3f}. Standardisation is essential for distance calculations; its training score of 1.0000 is higher than its 5-fold CV score ({cv('KNN')}), showing that memorisation does not transfer perfectly.",
 "Naive Bayes": f"Naive Bayes obtains {r.loc['Naive Bayes','Accuracy']:.2%} accuracy and MCC {r.loc['Naive Bayes','MCC']:.3f}, while its AUC is relatively strong at {r.loc['Naive Bayes','AUC']:.4f}. The gap suggests useful ranking but less reliable threshold decisions. Highly correlated radius, perimeter, and area variables conflict with the independence assumption, and the similar train ({r.loc['Naive Bayes','Train Acc']:.3f}) and test scores point more to bias than overfitting.",
 "Support Vector Machine": f"The RBF SVM is effectively tied with Logistic Regression: accuracy {r.loc['Support Vector Machine','Accuracy']:.2%}, AUC {r.loc['Support Vector Machine','AUC']:.4f}, and MCC {r.loc['Support Vector Machine','MCC']:.3f}. Its CV accuracy ({cv('Support Vector Machine')}) is below Logistic Regression's, so the additional non-linear flexibility does not improve this split despite the strong test result.",
 }
 win = (f"**Logistic Regression** (with SVM as a statistical tie). LR and SVM have identical test accuracy ({r.loc['Logistic Regression','Accuracy']:.2%}), MCC ({r.loc['Logistic Regression','MCC']:.3f}) and recall, "
        f"but LR has the higher 5-fold CV accuracy ({cv('Logistic Regression')} vs {cv('Support Vector Machine')}), the highest AUC, trains in milliseconds and is interpretable. "
        f"We use MCC and malignant sensitivity alongside accuracy because the malignant class is the safety-critical class; a malignant tumour predicted benign is the clinically costly error. "
-       f"KNN avoids missed malignant cases here but raises more benign false alarms. With only {len(y)} test rows, one sample changes accuracy by {1/len(y):.2%}, so the LR/SVM tie should not be over-interpreted.")
+       f"KNN misses more malignant cases than LR/SVM on this split, although it produces no benign false alarms. With only {len(y)} test rows, one sample changes accuracy by {1/len(y):.2%}, so the LR/SVM tie should not be over-interpreted.")
 fig = lambda f, c: f"![{c}](artifacts/figures/{f}.png)\n*{c}*\n"
 md = f"""# 🩺 Breast-Cancer Diagnosis – Five-Classifier Comparison & Streamlit Deployment
 **BITS Pilani WILP · M.Tech (AIML) · Machine Learning · Assignment 2**
@@ -90,7 +91,6 @@ project-folder/
 ├── problem_statement/     # original assignment PDF
 ├── submission/            # final PDF and BITS Lab screenshots
 ├── config/                # student, link, and submission metadata
-├── reports/               # grader feedback and reports
 └── requirements.txt
 ```
 The root `app.py`, `train.py`, and `build_readme.py` files are thin compatibility launchers; implementation remains in `src/`. `artifacts/` is the generated source-of-truth output, while root `model/`, `test_data.csv`, and `full_dataset.csv` are refreshed compatibility copies required by the assignment layout.
@@ -137,7 +137,7 @@ The required six metrics are shown above. For clinical interpretation, malignant
 
 {fig('06_metric_comparison','Figure 3 – Metric comparison across models')}
 {fig('04_roc_curves','Figure 4 – ROC curves (test set)')}
-{fig('05_confusion_matrices','Figure 5 – Confusion matrices (class 0 = malignant)')}
+{fig('05_confusion_matrices','Figure 5 – Confusion matrices (benign/malignant axes; malignant is the clinical positive class)')}
 {fig('08_overfit_check','Figure 6 – Train vs CV vs test accuracy')}
 {fig('09_feature_importance','Figure 7 – Feature importance (Decision Tree) and coefficients (Logistic Regression)')}
 

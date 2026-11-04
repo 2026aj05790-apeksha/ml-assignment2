@@ -1,8 +1,7 @@
-streamlit>=1.50
+streamlit==1.66.1
 scikit-learn==1.8.0
 numpy
 pandas
 matplotlib
 seaborn
 joblib
-reportlab
