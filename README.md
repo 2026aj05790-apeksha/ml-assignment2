@@ -34,18 +34,16 @@ https://github.com/2026aj05790-apeksha/ml-assignment2
 project-folder/
 ├── app.py                 # root Streamlit launcher used for deployment
 ├── train.py               # root training launcher used by the assignment
-├── build_readme.py        # root documentation launcher
-├── full_dataset.csv       # rubric-required full-data mirror
-├── src/                   # application, training, and README-generation code
-├── artifacts/             # generated data, models, metrics, and figures
+├── src/                   # application and training code
+├── artifacts/             # generated models, metrics, and figures
+├── data/                  # canonical full dataset
 ├── test_data.csv          # rubric-required hold-out test data mirror
 ├── model/                 # rubric-required saved-model mirror
-├── problem_statement/     # original assignment PDF
 ├── submission/            # final PDF and BITS Lab screenshots
 ├── config/                # student, link, and submission metadata
 └── requirements.txt
 ```
-The root `app.py`, `train.py`, and `build_readme.py` files are thin compatibility launchers; implementation remains in `src/`. `artifacts/` is the generated source-of-truth output, while root `model/`, `test_data.csv`, and `full_dataset.csv` are refreshed compatibility copies required by the assignment layout.
+The root `app.py` and `train.py` files are thin compatibility launchers; implementation remains in `src/`. The training pipeline writes the canonical full dataset to `data/full_dataset.csv`, refreshes the required root `test_data.csv`, and synchronizes saved models to both `model/` and `artifacts/models/`.
 **Live Streamlit app:** https://ml-assignment2-bxkybtx2fackxbtb4bh9vk.streamlit.app
 
 ### How to run / reproduce

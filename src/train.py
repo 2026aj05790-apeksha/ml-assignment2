@@ -19,7 +19,7 @@ warnings.filterwarnings("ignore")
 SEED = 42
 sns.set_theme(style="whitegrid", context="notebook")
 ROOT = Path(__file__).resolve().parents[1]
-DATA_DIR = ROOT / "artifacts" / "data"
+DATA_DIR = ROOT / "data"
 MODEL_DIR = ROOT / "artifacts" / "models"
 COMPAT_MODEL_DIR = ROOT / "model"
 RESULTS_DIR = ROOT / "artifacts" / "results"
@@ -33,10 +33,8 @@ df = raw.frame.rename(columns={"target": "diagnosis"})   # 0 = malignant, 1 = be
 X, y = df.drop(columns="diagnosis"), df["diagnosis"]
 X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.2, stratify=y, random_state=SEED)
 test_frame = pd.concat([X_te, y_te], axis=1)
-test_frame.to_csv(DATA_DIR / "test_data.csv", index=False)
 test_frame.to_csv(ROOT / "test_data.csv", index=False)
 df.to_csv(DATA_DIR / "full_dataset.csv", index=False)
-df.to_csv(ROOT / "full_dataset.csv", index=False)
 
 # ---------- models (scaling lives INSIDE the pipeline, so saved file = full preprocessing) ----------
 def pipe(clf): return Pipeline([("scaler", StandardScaler()), ("clf", clf)])
